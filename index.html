@@ -124,7 +124,7 @@
 (function(){
   const $=id=>document.getElementById(id);
   // Engine endpoint is baked in at deploy — the team never sees or sets it.
-  const CONFIG={ engineUrl:"" };
+  const CONFIG={ engineUrl:"https://studiocommerce.app.n8n.cloud/webhook/research", batchUrl:"https://studiocommerce.app.n8n.cloud/webhook/research-batch" };
   const WK="sc-research-webhook";
   if(location.hash==="#setup"){ $("setup").style.display="block"; }
   $("webhook").value=localStorage.getItem(WK)||"";
@@ -251,7 +251,7 @@
   const BK="sc-research-batchhook";
   $("batchhook").value=localStorage.getItem(BK)||"";
   $("batchhook").addEventListener("input",()=>localStorage.setItem(BK,$("batchhook").value.trim()));
-  function batchUrl(){ return localStorage.getItem(BK)||""; }
+  function batchUrl(){ return CONFIG.batchUrl || localStorage.getItem(BK) || ""; }
   function parseCSV(text){
     const rows=[]; let row=[], cur='', q=false;
     for(let i=0;i<text.length;i++){ const c=text[i];
