@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Tool — Sales · Studio + Commerce</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{ color-scheme:light; --ink:#000; --gray:#808080; --line:#ececec; --underline:#f2f2f2; --border:#e3e3e3; }
+  *{box-sizing:border-box}
+  html,body{background:#fff}
+  body{margin:0;color:var(--ink);font-family:"DM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:15px;line-height:1.55;letter-spacing:-0.02em;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,.serif{font-family:"Instrument Serif",Georgia,serif;font-weight:400;letter-spacing:-0.025em}
+  .wrap{max-width:760px;margin:0 auto;padding:30px 26px 60px}
+  .brandbar{text-align:center;margin-bottom:30px}
+  .wordmark{font-family:"DM Sans";font-weight:800;text-transform:uppercase;letter-spacing:-0.085em;font-size:15px}
+  .wordmark .plus{color:var(--gray)}
+  h1{font-size:40px;line-height:1.02;margin:0}
+  .sub{color:var(--gray);font-size:14px;margin-top:10px}
+  .panel{margin-top:28px;border:1px solid var(--line);border-radius:18px;padding:22px}
+  label{display:block;font-family:"DM Sans";font-weight:700;font-size:11px;color:var(--gray);margin:0 0 6px;text-transform:uppercase;letter-spacing:0.04em}
+  input[type=text],select{width:100%;background:#fff;border:1px solid var(--border);border-radius:12px;color:#000;padding:13px 14px;font-family:"DM Sans";font-size:16px;letter-spacing:-0.02em}
+  input[type=text]:focus,select:focus{outline:none;border-color:#000}
+  input#company{font-size:20px;padding:15px 16px}
+  ::placeholder{color:#b6b6b6}
+  .row{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+  .row>div{flex:1;min-width:150px}
+  .btn{background:#000;color:#fff;border:none;border-radius:999px;padding:14px 26px;font-family:"DM Sans";font-weight:600;font-size:15px;letter-spacing:-0.01em;cursor:pointer;transition:opacity .12s}
+  .btn:hover{opacity:.82}
+  .btn.ghost{background:#fff;color:#000;border:1px solid var(--border)}
+  .btn[disabled]{opacity:.4;cursor:default}
+  .runrow{display:flex;align-items:center;gap:14px;margin-top:18px;flex-wrap:wrap}
+  .status{font-size:13px;color:var(--gray)}
+  .spinner{width:15px;height:15px;border:2px solid var(--underline);border-top-color:#000;border-radius:50%;display:inline-block;vertical-align:-2px;margin-right:7px;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  /* results */
+  #results{margin-top:24px;display:none}
+  .banner{background:var(--underline);border-radius:11px;padding:10px 14px;font-size:12.5px;color:var(--gray);margin-bottom:18px}
+  .rhead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:6px}
+  .rhead .name{font-size:30px;line-height:1.05}
+  .rhead .meta{font-size:13px;color:var(--gray);margin-top:4px}
+  .tier{font-family:"DM Sans";font-size:13px;font-weight:600;padding:6px 14px;border-radius:999px;display:inline-block}
+  .tier.t1{background:#000;color:#fff} .tier.t2{background:#fff;color:#000;border:1.5px solid #000}
+  .tier.t3{background:var(--underline);color:#000} .tier.tx{background:var(--underline);color:var(--gray)}
+  .tier.dq{background:#fff;color:var(--gray);border:1.5px solid var(--gray)}
+  .total{font-family:"Instrument Serif";font-size:34px;line-height:1}
+  .dim{padding:16px 0;border-bottom:1px solid var(--line)}
+  .dimtop{display:flex;align-items:center;gap:12px}
+  .dimtop .dn{font-family:"DM Sans";font-weight:700;font-size:13px}
+  .scoredot{margin-left:auto;font-family:"DM Sans";font-weight:700;font-size:13px;background:#000;color:#fff;border-radius:8px;padding:3px 10px}
+  .scoredot.soft{background:var(--underline);color:#000}
+  .notes{margin:10px 0 0;padding:0;list-style:none}
+  .notes li{font-size:13.5px;color:#333;padding:3px 0 3px 16px;position:relative}
+  .notes li:before{content:"–";position:absolute;left:0;color:var(--gray)}
+  .confirm{font-size:12px;color:var(--gray);margin-top:8px;font-style:italic;font-family:"Instrument Serif"}
+  .sec{margin-top:18px}
+  .sec h3{font-size:18px;margin:0 0 8px}
+  .chip{display:inline-flex;gap:7px;align-items:center;font-size:13px;padding:8px 14px;border-radius:999px;background:var(--underline);margin:0 8px 8px 0;text-decoration:none;color:#000;cursor:pointer;transition:background .12s}
+  a.chip:hover{background:#e8e8e8}
+  a.chip.cs{background:#fff;border:1px solid var(--border)}
+  .contact{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .contact small{color:var(--gray)}
+  .src a{color:var(--gray);font-size:12px;display:block;text-decoration:none;padding:2px 0}
+  .src a:hover{color:#000;text-decoration:underline}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px;align-items:center}
+  .saved{font-size:12px;color:var(--gray)}
+  .settings{margin-top:30px;border-top:1px solid var(--line);padding-top:18px}
+  .footer{text-align:center;color:var(--gray);font-size:12px;margin-top:40px}
+  .orline{display:flex;align-items:center;gap:12px;color:var(--gray);font-size:12px;margin:18px 0}
+  .orline:before,.orline:after{content:'';height:1px;background:var(--line);flex:1}
+  .drop{border:1.5px dashed var(--border);border-radius:14px;padding:26px;text-align:center;cursor:pointer;transition:border-color .12s,background .12s}
+  .drop:hover,.drop.drag{border-color:#000;background:var(--underline)}
+  .drop b{font-family:"DM Sans";font-weight:600;font-size:15px}
+  #batch{margin-top:22px;display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brandbar"><span class="wordmark">STUDIO<span class="plus">+</span>COMMERCE</span></div>
+  <div style="text-align:center">
+    <h1>Research a company</h1>
+    <div class="sub">Type a company name. The engine researches it and scores it against the ABM framework — you just review.</div>
+  </div>
+
+  <div class="panel">
+    <label>Company name</label>
+    <input type="text" id="company" placeholder="e.g. American Landmark Apartments" autocomplete="off">
+    <div class="row">
+      <div><label>Account type</label>
+        <select id="acctType"><option>Multifamily</option><option>Student Housing</option><option>Both</option></select>
+      </div>
+      <div><label>Primary market (optional)</label><input type="text" id="market" placeholder="e.g. Tampa, FL"></div>
+      <div class="shOnly" style="display:none"><label>Key university (optional)</label><input type="text" id="university" placeholder="e.g. University of Arizona"></div>
+    </div>
+    <div class="runrow">
+      <button class="btn" id="runBtn">Run research</button>
+      <span class="status" id="status"></span>
+    </div>
+
+    <div class="orline"><span>or upload a list</span></div>
+    <div id="drop" class="drop">
+      <b>Drop a CoStar CSV export here</b>
+      <div class="sub" style="margin-top:4px">or click to choose a file — we dedupe to unique owners and research each one</div>
+      <input type="file" id="file" accept=".csv,text/csv" hidden>
+    </div>
+  </div>
+
+  <div id="batch"></div>
+  <div id="results"></div>
+
+  <div class="settings" id="setup" style="display:none">
+    <label>Engine endpoint · admin only</label>
+    <input type="text" id="webhook" placeholder="https://your-n8n-instance/webhook/research">
+    <div class="sub" style="margin-top:6px">Hidden from the team. Open this page with #setup at the end of the URL to reach it. Set once; the engine stays connected after.</div>
+    <label style="margin-top:14px">Batch upload endpoint (CoStar CSV)</label>
+    <input type="text" id="batchhook" placeholder="https://your-n8n-instance/webhook/research-batch">
+  </div>
+
+  <div class="footer"><span class="wordmark" style="font-size:11px">STUDIO<span class="plus">+</span>COMMERCE</span><div style="margin-top:5px">Research Tool — Sales · type a company, the engine does the rest.</div></div>
+</div>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  // Engine endpoint is baked in at deploy — the team never sees or sets it.
+  const CONFIG={ engineUrl:"" };
+  const WK="sc-research-webhook";
+  if(location.hash==="#setup"){ $("setup").style.display="block"; }
+  $("webhook").value=localStorage.getItem(WK)||"";
+  $("webhook").addEventListener("input",()=>localStorage.setItem(WK,$("webhook").value.trim()));
+  function engineUrl(){ return CONFIG.engineUrl || localStorage.getItem(WK) || ""; }
+  $("acctType").addEventListener("change",()=>{
+    const sh=$("acctType").value!=="Multifamily";
+    document.querySelector(".shOnly").style.display=sh?"":"none";
+  });
+
+  // baked-in example so the UX is testable with no backend
+  const DEMO={
+    company:"American Landmark Apartments", accountType:"Multifamily",
+    totalProperties:"90+", units:"~32,000", states:"FL, TX, GA, NC, SC, TN, VA, AZ",
+    qualification:"Qualified",
+    d1:{score:4, confirm:true, notes:[
+      "In-house Director of Marketing (Devin Lusk); authentic, non-stock content approach — got industry press.",
+      "Corporate IG ~2,059 followers; property accounts (e.g. The Pointe on Westshore) post lifestyle/events.",
+      "90+ rolled-up value-add assets — newly acquired properties likely lag. Human should eyeball 3–5 property accounts."]},
+    d2:{score:4, notes:[
+      "Closed $400M first close on Fund V; targeting $1B (~$3B buying power) incl. distressed.",
+      "2025–26 acquisitions: Vinoy at St. Johns (420u), Courtney Meadows (276u), Tramore Village (324u), Boulders Lakeview (212u).",
+      "Aggressive Sun Belt expansion into markets absorbing heavy new supply."]},
+    d3:{score:4, notes:[
+      "Value-add operator (older/distressed assets) — structural reputation pressure.",
+      "BBB complaints: roach infestations, unaddressed maintenance, billing/overcharge disputes, safety.",
+      "Concessions being issued ($500 case documented)."]},
+    d4:{score:5, notes:[
+      "PE-backed (Electra America), institutional LP base, 30-yr track record.",
+      "#34 on NMHC 2025 (~32,000 units). Clearly affords $35K+."]},
+    rgc:"N/A",
+    total:17, tier:"Tier 1 — Priority Account",
+    contacts:[
+      {name:"Devin Lusk", role:"Director of Marketing", tier:"① Marketing leader"},
+      {name:"Joe Lubeck", role:"CEO / Founder", tier:"③ Owner / Principal"}],
+    sources:[
+      "https://www.multifamilydive.com/news/multifamily-value-add-fund-distressed-apartment/809891/",
+      "https://yieldpro.com/2026/04/courtney-meadows/",
+      "https://www.bbb.org/us/fl/tampa/profile/apartments/american-landmark-apartments-0653-90324851/complaints",
+      "https://www.multifamilydive.com/news/how-to-avoid-prospects-tuning-out-on-social-media/753274/"]
+  };
+
+  function tierClass(t){ t=(t||"")+""; if(t.indexOf("1")>-1)return"t1"; if(t.indexOf("2")>-1)return"t2"; if(t.indexOf("3")>-1)return"t3"; if(/disq/i.test(t))return"dq"; return"tx"; }
+  function esc(s){ return (s==null?"":s+"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+  function dimBlock(n,label,d){
+    if(!d) return "";
+    const soft=d.score>=5?"":"";
+    return `<div class="dim"><div class="dimtop"><span class="dn">${label}</span>
+      <span class="scoredot${d.score<3?'':' '}">${d.score}/5</span></div>
+      <ul class="notes">${(d.notes||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+      ${d.confirm?'<div class="confirm">Needs a human glance to confirm — judge the actual property accounts.</div>':''}</div>`;
+  }
+
+  function platformSection(r){
+    const c=encodeURIComponent(r.company||"");
+    const cm=encodeURIComponent(((r.company||"")+" "+(r.market||"")).trim());
+    const costar=r.costarUrl || ("https://www.costar.com/search/all?q="+c);
+    const L=[
+      ["Instagram","https://www.google.com/search?q=site:instagram.com+"+c,""],
+      ["TikTok","https://www.tiktok.com/search?q="+c,""],
+      ["YouTube","https://www.youtube.com/results?search_query="+c,""],
+      ["LinkedIn","https://www.linkedin.com/search/results/all/?keywords="+c,""],
+      ["Google reviews","https://www.google.com/search?q="+cm+"+apartments+reviews",""],
+      ["CoStar","",( "cs")]
+    ];
+    return `<div class="sec"><h3>Confirm the visual — open each platform</h3>
+      <div class="sub" style="margin-bottom:10px">Eyeball the actual content for ${esc(r.company)}, then lock the final Dimension 1 score.</div>`+
+      L.map(x=>`<a class="chip ${x[2]}" href="${x[2]==='cs'?costar:x[1]}" target="_blank" rel="noopener">${x[0]} ↗</a>`).join("")+
+      `</div>`;
+  }
+
+  function render(r){
+    const res=$("results");
+    const sh=(r.accountType!=="Multifamily");
+    let html="";
+    if(r._demo) html+=`<div class="banner">Live example (engine not connected yet). Connect your n8n webhook below and “Run research” will research any company you type.</div>`;
+    html+=`<div class="rhead">
+      <div><div class="name serif">${esc(r.company)}</div>
+        <div class="meta">${esc(r.accountType)} · ${esc(r.totalProperties||"")} properties${r.units?" · "+esc(r.units)+" units":""} · ${esc(r.states||"")} · ${esc(r.qualification||"")}</div></div>
+      <div style="text-align:right"><div class="total">${esc(r.total)}<span style="font-size:14px;color:var(--gray)">/20</span></div>
+        <div class="tier ${tierClass(r.tier)}" style="margin-top:8px">${esc(r.tier)}</div></div>
+    </div>`;
+    html+=dimBlock(1,"Dimension 1 · Digital presence",r.d1);
+    html+=dimBlock(2,"Dimension 2 · Growth & market",r.d2);
+    html+=dimBlock(3,"Dimension 3 · Pain signal",r.d3);
+    html+=dimBlock(4,"Dimension 4 · Budget signal",r.d4);
+    html+=platformSection(r);
+    if(sh && r.rgc) html+=`<div class="sec"><h3>RGC opportunity</h3><span class="chip">${esc(r.rgc)}</span></div>`;
+    if(r.contacts&&r.contacts.length){ html+=`<div class="sec"><h3>Contacts found</h3>`+
+      r.contacts.map(c=>`<div class="contact"><span><b>${esc(c.name)}</b> — ${esc(c.role)}</span><small>${esc(c.tier||"")}</small></div>`).join("")+
+      `<div class="confirm">LinkedIn activity check is the one manual step.</div></div>`; }
+    if(r.sources&&r.sources.length){ html+=`<div class="sec src"><h3>Sources</h3>`+
+      r.sources.map(s=>`<a href="${esc(s)}" target="_blank" rel="noopener">${esc(s)}</a>`).join("")+`</div>`; }
+    html+=`<div class="actions"><button class="btn" id="saveBtn">Save to Airtable</button>
+      <button class="btn ghost" id="newBtn">New search</button><span class="saved" id="saved"></span></div>`;
+    res.innerHTML=html; res.style.display="block";
+    res.scrollIntoView({behavior:"smooth",block:"start"});
+    $("newBtn").onclick=()=>{ res.style.display="none"; $("company").value=""; $("company").focus(); };
+    $("saveBtn").onclick=()=>{ $("saved").textContent = r._demo ? "Connect the engine to enable saving" : "Saved to Airtable ✓"; };
+  }
+
+  function run(){
+    const c=$("company").value.trim();
+    if(!c){ $("status").textContent="Type a company name first"; return; }
+    const url=engineUrl();
+    $("runBtn").disabled=true;
+    $("status").innerHTML='<span class="spinner"></span>Researching '+esc(c)+' — reading news, reviews, ownership, socials…';
+    const payload={company:c, accountType:$("acctType").value, market:$("market").value.trim(), university:$("university").value.trim()};
+    const finish=(rec)=>{ $("runBtn").disabled=false; $("status").textContent=""; render(rec); };
+    if(url){
+      fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
+        .then(r=>{ if(!r.ok) throw 0; return r.json(); })
+        .then(rec=>finish(rec))
+        .catch(()=>{ const d=Object.assign({},DEMO,{_demo:true}); $("status").textContent=""; $("runBtn").disabled=false; render(d); });
+    } else {
+      setTimeout(()=>finish(Object.assign({},DEMO,{_demo:true})),900);
+    }
+  }
+  $("runBtn").onclick=run;
+  $("company").addEventListener("keydown",e=>{ if(e.key==="Enter") run(); });
+
+  // ---- batch CSV upload (CoStar export) ----
+  const BK="sc-research-batchhook";
+  $("batchhook").value=localStorage.getItem(BK)||"";
+  $("batchhook").addEventListener("input",()=>localStorage.setItem(BK,$("batchhook").value.trim()));
+  function batchUrl(){ return localStorage.getItem(BK)||""; }
+  function parseCSV(text){
+    const rows=[]; let row=[], cur='', q=false;
+    for(let i=0;i<text.length;i++){ const c=text[i];
+      if(q){ if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+      else { if(c==='"') q=true; else if(c===',') { row.push(cur); cur=''; } else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; } else if(c!=='\r') cur+=c; } }
+    if(cur!==''||row.length){ row.push(cur); rows.push(row); }
+    return rows.filter(r=>r.some(x=>(x||'').trim()!==''));
+  }
+  function findCol(h,names){ const l=h.map(x=>x.toLowerCase().trim()); for(const n of names){ const i=l.indexOf(n); if(i>-1) return i; } return -1; }
+  function pickOwner(h){
+    let i=findCol(h,['true owner','recorded owner','owner name','owner','company','landlord']);
+    if(i>-1) return i;
+    const l=h.map(x=>x.toLowerCase()); for(let k=0;k<l.length;k++){ if(l[k].includes('owner')||l[k].includes('company')) return k; }
+    return -1;
+  }
+  let batchOwners=[];
+  function handleFile(f){
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const rows=parseCSV(reader.result);
+      if(rows.length<2){ $("batch").innerHTML='<div class="banner">Could not read rows from that file.</div>'; $("batch").style.display='block'; return; }
+      const headers=rows[0]; const oc=pickOwner(headers);
+      if(oc<0){ $("batch").innerHTML='<div class="banner">No owner/company column found — expected something like "True Owner".</div>'; $("batch").style.display='block'; return; }
+      const mc=findCol(headers,['market','submarket']); const stc=findCol(headers,['state']); const cc=findCol(headers,['city']);
+      const map={};
+      for(let i=1;i<rows.length;i++){ const r=rows[i]; const name=(r[oc]||'').trim(); if(!name) continue;
+        const key=name.toLowerCase();
+        if(!map[key]) map[key]={ company:name, count:0, market:'' };
+        map[key].count++;
+        if(!map[key].market){ const mk=mc>-1?(r[mc]||'').trim():''; const ct=cc>-1?(r[cc]||'').trim():''; const st=stc>-1?(r[stc]||'').trim():''; map[key].market=mk||[ct,st].filter(Boolean).join(', '); }
+      }
+      batchOwners=Object.values(map).sort((a,b)=>b.count-a.count);
+      const props=rows.length-1;
+      $("batch").innerHTML='<div class="rhead"><div><div class="name serif">'+batchOwners.length+' unique owners</div>'+
+        '<div class="meta">from '+props+' properties · column "'+esc(headers[oc])+'"</div></div>'+
+        '<button class="btn" id="sendBatch">Research all '+batchOwners.length+'</button></div>'+
+        '<ul class="notes">'+batchOwners.slice(0,12).map(o=>'<li>'+esc(o.company)+' — '+o.count+' propert'+(o.count===1?'y':'ies')+(o.market?' · '+esc(o.market):'')+'</li>').join('')+
+        (batchOwners.length>12?'<li>… and '+(batchOwners.length-12)+' more</li>':'')+'</ul>';
+      $("batch").style.display='block'; $("batch").scrollIntoView({behavior:'smooth',block:'start'});
+      $("sendBatch").onclick=sendBatch;
+    };
+    reader.readAsText(f);
+  }
+  function sendBatch(){
+    const url=batchUrl();
+    const payload={ owners: batchOwners.map(o=>({ company:o.company, market:o.market, accountType:$("acctType").value })) };
+    if(!url){ $("batch").insertAdjacentHTML('beforeend','<div class="banner">Parsed '+batchOwners.length+' owners. Connect the batch endpoint in #setup to send them for research.</div>'); return; }
+    $("sendBatch").disabled=true; $("sendBatch").textContent='Queuing…';
+    fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(r=>{ if(!r.ok) throw 0; $("sendBatch").textContent='Queued '+batchOwners.length+' ✓ — they’ll fill into Airtable'; })
+      .catch(()=>{ $("sendBatch").disabled=false; $("sendBatch").textContent='Failed — check batch endpoint'; });
+  }
+  const drop=$("drop"), fileInput=$("file");
+  drop.onclick=()=>fileInput.click();
+  fileInput.onchange=()=>{ if(fileInput.files[0]) handleFile(fileInput.files[0]); };
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{ e.preventDefault(); drop.classList.add('drag'); }));
+  ['dragleave'].forEach(ev=>drop.addEventListener(ev,e=>{ e.preventDefault(); drop.classList.remove('drag'); }));
+  drop.addEventListener('drop',e=>{ e.preventDefault(); drop.classList.remove('drag'); const f=e.dataTransfer.files[0]; if(f) handleFile(f); });
+})();
+</script>
+</body>
+</html>
