@@ -212,6 +212,8 @@
     html+=dimBlock(2,"Dimension 2 · Growth & market",r.d2);
     html+=dimBlock(3,"Dimension 3 · Pain signal",r.d3);
     html+=dimBlock(4,"Dimension 4 · Budget signal",r.d4);
+    if(r.socials && r.socials.length){ html+=`<div class="sec"><h3>Social pages — click to validate</h3><div class="sub" style="margin-bottom:10px">Real accounts found for ${esc(r.company)} — open and eyeball the content.</div>`+
+      r.socials.map(sx=>`<a class="chip" href="${esc(sx.url)}" target="_blank" rel="noopener">${esc(sx.platform||'Link')} ↗</a>`).join("")+`</div>`; }
     html+=platformSection(r);
     if(sh && r.rgc) html+=`<div class="sec"><h3>RGC opportunity</h3><span class="chip">${esc(r.rgc)}</span></div>`;
     if(r.contacts&&r.contacts.length){ html+=`<div class="sec"><h3>Contacts found</h3>`+
