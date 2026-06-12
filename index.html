@@ -100,9 +100,9 @@
 
     <div class="orline"><span>or upload a list</span></div>
     <div id="drop" class="drop">
-      <b>Drop a CoStar CSV export here</b>
+      <b>Drop a CoStar export here (Excel or CSV)</b>
       <div class="sub" style="margin-top:4px">or click to choose a file — we dedupe to unique owners and research each one</div>
-      <input type="file" id="file" accept=".csv,text/csv" hidden>
+      <input type="file" id="file" accept=".csv,.xlsx,.xls,text/csv" hidden>
     </div>
   </div>
 
@@ -120,6 +120,7 @@
   <div class="footer"><span class="wordmark" style="font-size:11px">STUDIO<span class="plus">+</span>COMMERCE</span><div style="margin-top:5px">Research Tool — Sales · type a company, the engine does the rest.</div></div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 (function(){
   const $=id=>document.getElementById(id);
@@ -269,42 +270,75 @@
     const l=h.map(x=>x.toLowerCase()); for(let k=0;k<l.length;k++){ if(l[k].includes('owner')||l[k].includes('company')) return k; }
     return -1;
   }
-  let batchOwners=[];
+  let batchOwners=[], batchAll=[];
+  function rowsToOwners(rows){
+    let hIdx=-1;
+    for(let i=0;i<Math.min(rows.length,20);i++){ if(rows[i] && pickOwner(rows[i])>-1){ hIdx=i; break; } }
+    if(hIdx<0) return null;
+    const headers=rows[hIdx], data=rows.slice(hIdx+1);
+    const oc=pickOwner(headers);
+    const propsC=findCol(headers,['properties']);
+    const ucC=findCol(headers,['sf under construction','under construction']);
+    const otC=findCol(headers,['owner type']);
+    const ptC=findCol(headers,['main property type','property type']);
+    const cityC=findCol(headers,['hq city','city']);
+    const stC=findCol(headers,['hq state','state']);
+    const numize=v=>{ const n=parseInt(String(v==null?'':v).replace(/[^0-9]/g,''),10); return isFinite(n)?n:0; };
+    const map={};
+    for(const r of data){ if(!r) continue; const name=String(r[oc]==null?'':r[oc]).trim(); if(!name||name.toLowerCase()==='companies') continue;
+      const key=name.toLowerCase(); if(map[key]) continue;
+      const city=cityC>-1?String(r[cityC]||'').trim():''; const st=stC>-1?String(r[stC]||'').trim():'';
+      map[key]={ company:name, market:[city,st].filter(Boolean).join(', '),
+        properties: propsC>-1?numize(r[propsC]):null,
+        underConstruction: ucC>-1?numize(r[ucC]):null,
+        ownerType: otC>-1?String(r[otC]||'').trim():'',
+        propertyType: ptC>-1?String(r[ptC]||'').trim():'',
+        hasMetrics: (propsC>-1||ucC>-1) };
+    }
+    return Object.values(map);
+  }
+  function isResidential(pt){ pt=(pt||'').toLowerCase(); if(!pt) return true; if(/(office|industrial|retail|warehouse|hotel|land|flex|storage|medical)/.test(pt)) return /(multi|apartment|residential|student|housing)/.test(pt); return true; }
+  function qualifies(o){ if(!o.hasMetrics) return true; return isResidential(o.propertyType) && ((o.properties||0)>=20 || (o.underConstruction||0)>0); }
   function handleFile(f){
+    const name=(f.name||'').toLowerCase();
+    const isXls=name.endsWith('.xlsx')||name.endsWith('.xls');
     const reader=new FileReader();
     reader.onload=()=>{
-      const rows=parseCSV(reader.result);
-      if(rows.length<2){ $("batch").innerHTML='<div class="banner">Could not read rows from that file.</div>'; $("batch").style.display='block'; return; }
-      const headers=rows[0]; const oc=pickOwner(headers);
-      if(oc<0){ $("batch").innerHTML='<div class="banner">No owner/company column found — expected something like "True Owner".</div>'; $("batch").style.display='block'; return; }
-      const mc=findCol(headers,['market','submarket']); const stc=findCol(headers,['state']); const cc=findCol(headers,['city']);
-      const map={};
-      for(let i=1;i<rows.length;i++){ const r=rows[i]; const name=(r[oc]||'').trim(); if(!name) continue;
-        const key=name.toLowerCase();
-        if(!map[key]) map[key]={ company:name, count:0, market:'' };
-        map[key].count++;
-        if(!map[key].market){ const mk=mc>-1?(r[mc]||'').trim():''; const ct=cc>-1?(r[cc]||'').trim():''; const st=stc>-1?(r[stc]||'').trim():''; map[key].market=mk||[ct,st].filter(Boolean).join(', '); }
-      }
-      batchOwners=Object.values(map).sort((a,b)=>b.count-a.count);
-      const props=rows.length-1;
-      $("batch").innerHTML='<div class="rhead"><div><div class="name serif">'+batchOwners.length+' unique owners</div>'+
-        '<div class="meta">from '+props+' properties · column "'+esc(headers[oc])+'"</div></div>'+
-        '<button class="btn" id="sendBatch">Research all '+batchOwners.length+'</button></div>'+
-        '<ul class="notes">'+batchOwners.slice(0,12).map(o=>'<li>'+esc(o.company)+' — '+o.count+' propert'+(o.count===1?'y':'ies')+(o.market?' · '+esc(o.market):'')+'</li>').join('')+
-        (batchOwners.length>12?'<li>… and '+(batchOwners.length-12)+' more</li>':'')+'</ul>';
-      $("batch").style.display='block'; $("batch").scrollIntoView({behavior:'smooth',block:'start'});
-      $("sendBatch").onclick=sendBatch;
+      let rows=null;
+      try{
+        if(isXls && window.XLSX){ const wb=XLSX.read(new Uint8Array(reader.result),{type:'array'}); const ws=wb.Sheets[wb.SheetNames[0]]; rows=XLSX.utils.sheet_to_json(ws,{header:1,blankrows:false}); }
+        else { rows=parseCSV(reader.result); }
+      }catch(e){ rows=null; }
+      if(!rows||rows.length<1){ $("batch").innerHTML='<div class="banner">Could not read that file.</div>'; $("batch").style.display='block'; return; }
+      const owners=rowsToOwners(rows);
+      if(!owners||!owners.length){ $("batch").innerHTML='<div class="banner">Couldn’t find a company column. Make sure the export includes a “Company” or “Companies” column.</div>'; $("batch").style.display='block'; return; }
+      batchAll=owners; renderBatch();
     };
-    reader.readAsText(f);
+    if(isXls) reader.readAsArrayBuffer(f); else reader.readAsText(f);
   }
-  function sendBatch(){
+  function renderBatch(){
+    const hasMetrics=batchAll.some(o=>o.hasMetrics);
+    const qual=batchAll.filter(qualifies);
+    batchOwners=qual;
+    const top=qual.slice().sort((a,b)=>((b.properties||0)+(b.underConstruction>0?100000:0))-((a.properties||0)+(a.underConstruction>0?100000:0))).slice(0,12);
+    const head='<div class="name serif">'+qual.length+(hasMetrics?' qualify':' companies')+'</div>'+
+      '<div class="meta">'+(hasMetrics?('of '+batchAll.length+' in the file · 20+ properties or active construction, residential'):(batchAll.length+' unique companies after dedupe'))+'</div>';
+    $("batch").innerHTML='<div class="rhead"><div>'+head+'</div><button class="btn" id="sendBatch">Research '+qual.length+'</button></div>'+
+      '<ul class="notes">'+top.map(o=>'<li>'+esc(o.company)+(o.properties!=null?' — '+o.properties+' properties':'')+(o.underConstruction>0?' · '+o.underConstruction.toLocaleString()+' SF u/c':'')+(o.ownerType?' · '+esc(o.ownerType):'')+'</li>').join('')+
+      (qual.length>12?'<li>… and '+(qual.length-12)+' more</li>':'')+'</ul>'+
+      (hasMetrics&&qual.length<batchAll.length?'<div class="sub" style="margin-top:8px"><a href="#" id="researchAll">or research all '+batchAll.length+' →</a></div>':'');
+    $("batch").style.display='block'; $("batch").scrollIntoView({behavior:'smooth',block:'start'});
+    $("sendBatch").onclick=()=>sendBatch(batchOwners);
+    const ra=$("researchAll"); if(ra) ra.onclick=(e)=>{ e.preventDefault(); sendBatch(batchAll); };
+  }
+  function sendBatch(list){
     const url=batchUrl();
-    const payload={ owners: batchOwners.map(o=>({ company:o.company, market:o.market, accountType:$("acctType").value })) };
-    if(!url){ $("batch").insertAdjacentHTML('beforeend','<div class="banner">Parsed '+batchOwners.length+' owners. Connect the batch endpoint in #setup to send them for research.</div>'); return; }
-    $("sendBatch").disabled=true; $("sendBatch").textContent='Queuing…';
+    const payload={ accountType:$("acctType").value, owners:list.map(o=>({ company:o.company, market:o.market, properties:o.properties, underConstruction:o.underConstruction, ownerType:o.ownerType })) };
+    if(!url){ $("batch").insertAdjacentHTML('beforeend','<div class="banner">Parsed '+list.length+' companies. (Batch endpoint not connected.)</div>'); return; }
+    const btn=$("sendBatch"); btn.disabled=true; btn.textContent='Queuing '+list.length+'…';
     fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
-      .then(r=>{ if(!r.ok) throw 0; $("sendBatch").textContent='Queued '+batchOwners.length+' ✓ — they’ll fill into Airtable'; })
-      .catch(()=>{ $("sendBatch").disabled=false; $("sendBatch").textContent='Failed — check batch endpoint'; });
+      .then(r=>{ if(!r.ok) throw 0; btn.textContent='Queued '+list.length+' ✓ — filling into Airtable'; })
+      .catch(()=>{ btn.disabled=false; btn.textContent='Failed — check endpoint'; });
   }
   const drop=$("drop"), fileInput=$("file");
   drop.onclick=()=>fileInput.click();
